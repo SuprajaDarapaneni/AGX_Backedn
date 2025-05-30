@@ -48,9 +48,26 @@ app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 // app.use(cors());
+//app.use(cors({
+ // origin: 'http://localhost:5173', // Your Vite or React dev server
+//  credentials: true,               // If you're using cookies or sessions
+//}));
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://www.agx-international.com',
+  'https://agx-frontend.vercel.app'
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Your Vite or React dev server
-  credentials: true,               // If you're using cookies or sessions
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 app.use("/uploads", express.static("public/uploads"));
 
