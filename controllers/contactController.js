@@ -29,7 +29,7 @@ export const submitContactForm = async (req, res) => {
     // Email configuration
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: "itsmesupraja1@gmail.com",
+      to: "yaswanthkumarch2001@gmail.com",
       subject: "New Contact Form Submission",
       html: `
         <h3>Contact Form Details</h3>
