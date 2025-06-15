@@ -17,19 +17,21 @@ export const submitContactForm = async (req, res) => {
     const newContact = new Contact({ name, email, phone, message });
     await newContact.save();
 
-    // Nodemailer transporter
+    // Nodemailer transporter using GoDaddy Webmail
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.EMAIL_HOST,                  // smtpout.secureserver.net
+      port: parseInt(process.env.EMAIL_PORT),        // 465
+      secure: true,                                  // true for 465, false for 587
       auth: {
-        user: process.env.EMAIL_USER,       // e.g., yourgmail@gmail.com
-        pass: process.env.EMAIL_PASS,       // Gmail App Password (not normal password)
+        user: process.env.EMAIL_USER,                // your business email
+        pass: process.env.EMAIL_PASS,                // webmail password
       },
     });
 
     // Email configuration
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: "yaswanthkumarch2001@gmail.com",
+      to: process.env.EMAIL_USER, // send to your own business inbox
       subject: "New Contact Form Submission",
       html: `
         <h3>Contact Form Details</h3>

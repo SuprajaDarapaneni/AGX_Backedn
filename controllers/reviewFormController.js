@@ -8,45 +8,48 @@ export const submitReview = async (req, res) => {
   try {
     const { name, email, rating, comment } = req.body;
 
-    // Save review to DB
+    // Save review to DB (private)
     const newReview = new ReviewForm({ name, email, rating, comment });
     await newReview.save();
 
-    // Create transporter using environment variables for auth
+    // Nodemailer transporter using GoDaddy Webmail
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.EMAIL_HOST,                 // smtpout.secureserver.net
+      port: parseInt(process.env.EMAIL_PORT),       // 465
+      secure: true,
       auth: {
-        user: process.env.EMAIL_USER || "itsmesupraja1@gmail.com",
-        pass: process.env.EMAIL_PASS || "mpwr voty qgul auxl",
+        user: process.env.EMAIL_USER,               // info@agx-international.com
+        pass: process.env.EMAIL_PASS,
       },
-      logger: true,   // Enable logger for debugging
-      debug: true,    // Enable debug output
+      logger: true,
+      debug: true,
     });
 
-    // Verify transporter configuration
-    await transporter.verify();
+    await transporter.verify(); // optional: verify SMTP settings before sending
 
-    // Prepare mail options
+    // Email message config
     const mailOptions = {
-      from: process.env.EMAIL_USER || "itsmesupraja1@gmail.com",  // Sender email
-      to: "itsmesupraja1@gmail.com",                     // Recipient email
-      subject: "New Customer Review",
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Send to your inbox
+      subject: "New Customer Review Received",
       html: `
-        <h3>Customer Review Submitted</h3>
+        <h3>Customer Review Details</h3>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Rating:</strong> ${rating} Stars</p>
-        <p><strong>Review:</strong> ${comment}</p>
+        <p><strong>Comment:</strong><br>${comment}</p>
       `,
     };
 
-    // Send email and log info
+    // Send the email
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info);
+    console.log("Review email sent:", info.messageId);
 
-    res.status(201).json({ message: "Review submitted successfully", newReview });
+    // Respond with confirmation (but don't send back review data)
+    res.status(201).json({ message: "Review submitted successfully." });
   } catch (error) {
     console.error("Error submitting review:", error);
-    res.status(500).json({ message: "Error submitting review", error: error.message || error });
+    res.status(500).json({ message: "Failed to submit review", error: error.message || error });
   }
 };
+

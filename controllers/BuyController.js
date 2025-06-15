@@ -1,4 +1,3 @@
-
 import BuySellForm from '../models/Buysellform.js';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
@@ -17,11 +16,12 @@ export const buysell = async (req, res) => {
       imageUrls = [],
     } = req.body;
 
+    // Validate industries
     if (!Array.isArray(industries) || industries.length === 0) {
       return res.status(400).json({ message: 'Please select at least one industry.' });
     }
 
-    // Save to DB
+    // Save form to DB
     const newForm = new BuySellForm({
       buySell,
       name,
@@ -34,40 +34,45 @@ export const buysell = async (req, res) => {
 
     await newForm.save();
 
-    // Email notification
+    // Email setup using GoDaddy SMTP
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT),
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      logger: true,
+      debug: true,
     });
 
+    // Format images if available
     const imageHtml = imageUrls
-  .map(url => `<img src="${url}" alt="Uploaded Image" style="max-width:300px; margin-bottom:10px;" />`)
-  .join('<br/>');
+      .map(url => `<img src="${url}" alt="Uploaded Image" style="max-width:300px; margin-bottom:10px;" />`)
+      .join('<br/>');
 
-
-
-
+    // Email content
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: 'yaswanthkumarch2001@gmail.com', // Replace with real recipient
+      to: 'info@agx-international.com', // change as needed
       subject: 'New Buy/Sell Form Submission',
-       html: `
-    <h3>New Form Submission</h3>
-    <p><strong>Type:</strong> ${buySell}</p>
-    <p><strong>Name:</strong> ${name}</p>
-    <p><strong>Phone:</strong> ${phone}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Industries:</strong> ${industries.join(', ')}</p>
-    <p><strong>Timing:</strong> ${timing}</p>
-    ${imageUrls.length > 0 ? `<h4>Images:</h4>${imageHtml}` : ''}
-  `
+      html: `
+        <h3>New Buy/Sell Request</h3>
+        <p><strong>Type:</strong> ${buySell}</p>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Industries:</strong> ${industries.join(', ')}</p>
+        <p><strong>Timing:</strong> ${timing}</p>
+        ${imageUrls.length > 0 ? `<h4>Images:</h4>${imageHtml}` : ''}
+      `,
     };
 
+    // Send email
     await transporter.sendMail(mailOptions);
 
+    // Send response to frontend
     res.status(201).json({ message: 'Form submitted and email sent successfully!' });
 
   } catch (error) {
