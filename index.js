@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
 
-// Route imports
+// Routes
 import clientRoutes from "./routes/client.js";
 import generalRoutes from "./routes/general.js";
 import managementRoutes from "./routes/management.js";
@@ -14,9 +14,9 @@ import contactRoutes from "./routes/contact.js";
 import authRoutes from "./routes/authRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
-import reviewFormRoutes from "./routes/reviewFormRoutes.js"; // ✅ New review form route
+import reviewFormRoutes from "./routes/reviewFormRoutes.js";
 
-// Data model imports
+// Data Models
 import User from "./models/User.js";
 import Product from "./models/Product.js";
 import ProductStat from "./models/ProductStat.js";
@@ -25,9 +25,8 @@ import OverallStat from "./models/OverallStat.js";
 import AffiliateStat from "./models/AffiliateStat.js";
 import Productcard from "./models/Productcard.js";
 import Contact from "./models/ContactUs.js";
-// import ReviewForm from "./models/reviewForm.js"; // ✅ Optional: only if saving reviews to DB
 
-// Sample data (for one-time seeding if needed)
+// Optional sample data
 import {
   dataUser,
   dataProduct,
@@ -37,66 +36,73 @@ import {
   dataAffiliateStat,
 } from "./data/index.js";
 
-/* CONFIGURATION */
+// Load environment variables
 dotenv.config();
+
+/* Express App Initialization */
 const app = express();
 
+/* Middleware Configuration */
 app.use(express.json());
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(cors());
-//app.use(cors({
- // origin: 'http://localhost:5173', // Your Vite or React dev server
-//  credentials: true,               // If you're using cookies or sessions
-//}));
+
+/* CORS Configuration */
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://www.agx-international.com',
-  'https://agx-frontend.vercel.app'
+  "http://localhost:5173",
+  "https://www.agx-international.com",
+  "https://agx-frontend.vercel.app"
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (e.g., curl or mobile apps)
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      return callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true
 }));
+
+/* Static Files */
 app.use("/uploads", express.static("public/uploads"));
 
-/* ROUTES */
+/* Routes */
 app.use("/client", clientRoutes);
 app.use("/general", generalRoutes);
 app.use("/management", managementRoutes);
 app.use("/auth", authRoutes);
 app.use("/", contactRoutes);
-app.use("/blogs", blogRoutes);          // ✅ Blog route
-app.use("/reviews", reviewRoutes);      // ✅ Displayed reviews route
-app.use("/reviewform", reviewFormRoutes); // ✅ Review form submission route
+app.use("/blogs", blogRoutes);
+app.use("/reviews", reviewRoutes);
+app.use("/reviewform", reviewFormRoutes);
 
-/* MONGOOSE SETUP */
+/* MongoDB Connection & Server Start */
 const PORT = process.env.PORT || 9000;
-mongoose
-  .connect(process.env.MONGO_URL || "mongodb://localhost:27017/ecomm", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    app.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
+const MONGO_URL = process.env.MONGO_URL || "mongodb://localhost:27017/ecomm";
 
-    /* ONLY ADD DATA ONE TIME */
-    // User.insertMany(dataUser);
-    // Product.insertMany(dataProduct);
-    // ProductStat.insertMany(dataProductStat);
-    // Transaction.insertMany(dataTransaction);
-    // OverallStat.insertMany(dataOverallStat);
-    // AffiliateStat.insertMany(dataAffiliateStat);
-  })
-  .catch((error) => console.log(`${error} did not connect`));
+mongoose.connect(MONGO_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on port: ${PORT}`);
+  });
+
+  /* Optional: Seed database ONCE */
+  // User.insertMany(dataUser);
+  // Product.insertMany(dataProduct);
+  // ProductStat.insertMany(dataProductStat);
+  // Transaction.insertMany(dataTransaction);
+  // OverallStat.insertMany(dataOverallStat);
+  // AffiliateStat.insertMany(dataAffiliateStat);
+})
+.catch((error) => {
+  console.error("❌ MongoDB connection failed:", error);
+});

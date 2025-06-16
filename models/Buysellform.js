@@ -1,4 +1,3 @@
-// models/BuySellForm.js
 import mongoose from 'mongoose';
 
 const BuySellFormSchema = new mongoose.Schema({
@@ -20,12 +19,16 @@ const BuySellFormSchema = new mongoose.Schema({
     required: true,
   },
   industries: {
-    type: [String], // <-- ARRAY of strings to support multiple industries
+    type: [String],
     required: true,
   },
   timing: {
     type: String,
     required: true,
+  },
+  imageUrls: {
+    type: [String], // <-- NEW: store array of Cloudinary image URLs
+    default: [],
   },
 }, { timestamps: true });
 

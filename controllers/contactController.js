@@ -8,7 +8,7 @@ export const submitContactForm = async (req, res) => {
   try {
     const { name, email, phone, message } = req.body;
 
-    // Validate all fields
+    // Validate fields
     if (!name || !email || !phone || !message) {
       return res.status(400).json({ message: "All fields are required." });
     }
@@ -17,19 +17,21 @@ export const submitContactForm = async (req, res) => {
     const newContact = new Contact({ name, email, phone, message });
     await newContact.save();
 
-    // Nodemailer transporter
+    // Email transporter config from .env
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT, 10),
+      secure: process.env.EMAIL_SECURE === "true", // "false" becomes false
       auth: {
-        user: process.env.EMAIL_USER,       // e.g., yourgmail@gmail.com
-        pass: process.env.EMAIL_PASS,       // Gmail App Password (not normal password)
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
-    // Email configuration
+    // Email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: "itsmesupraja1@gmail.com",
+      to: process.env.EMAIL_USER,
       subject: "New Contact Form Submission",
       html: `
         <h3>Contact Form Details</h3>
@@ -41,12 +43,12 @@ export const submitContactForm = async (req, res) => {
     };
 
     // Send email
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email sent:", info.messageId);
 
-    // Respond to frontend
     res.status(201).json({ message: "Your message has been submitted successfully!" });
   } catch (error) {
-    console.error("Error submitting contact form:", error);
+    console.error("❌ Error submitting contact form:", error);
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
