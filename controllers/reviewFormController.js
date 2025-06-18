@@ -30,7 +30,7 @@ export const submitReview = async (req, res) => {
     // Email message config
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER, // Send to your inbox
+      to: process.env.EMAIL_SEND, // Send to your inbox
       subject: "New Customer Review Received",
       html: `
         <h3>Customer Review Details</h3>
