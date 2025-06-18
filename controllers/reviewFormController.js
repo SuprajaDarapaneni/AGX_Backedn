@@ -35,7 +35,7 @@ export const submitReview = async (req, res) => {
     // Compose email content
     const mailOptions = {
       from: `"Review Notification" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_RECEIVER || process.env.EMAIL_USER, // Can send to another email
+      to: process.env.EMAIL_SEND, // Can send to another email
       subject: "📢 New Customer Review Submitted",
       html: `
         <h2>You've received a new customer review!</h2>

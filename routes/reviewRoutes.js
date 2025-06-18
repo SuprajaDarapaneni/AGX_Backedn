@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
 
     const mailOptions = {
       from: `"Review Notification" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_RECEIVER || process.env.EMAIL_USER,
+      to: process.env.EMAIL_SEND,
       subject: "📩 New Review Received",
       html: `
         <h2>New Review Submitted</h2>

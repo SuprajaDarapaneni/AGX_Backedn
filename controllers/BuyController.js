@@ -59,7 +59,7 @@ export const buysell = async (req, res) => {
     // Email message options
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to:process.env.EMAIL_USER, // recipient  'info@agx-international.com'
+      to:process.env.EMAIL_SEND, // recipient  'info@agx-international.com'
       subject: 'New Buy/Sell Form Submission',
       html: `
         <h3>New Buy/Sell Request</h3>
