@@ -42,7 +42,7 @@ export const buysell = async (req, res) => {
     // Email transporter using GoDaddy SMTP (STARTTLS)
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || 'smtpout.secureserver.net',
-      port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+      port: parseInt(process.env.EMAIL_PORT, 10) || 465,
       secure: false, // false for STARTTLS (port 587)
       auth: {
         user: process.env.EMAIL_USER,

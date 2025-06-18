@@ -54,7 +54,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const allowedOrigins = [
   "http://localhost:5173",
   "https://www.agx-international.com",
-  "https://agx-frontend.vercel.app"
+  "https://agx-frontend.vercel.app",
 ];
 
 app.use(cors({
