@@ -1,3 +1,5 @@
+// controllers/reviewController.js
+
 import ReviewForm from "../models/ReviewForm.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -8,55 +10,64 @@ export const submitReview = async (req, res) => {
   try {
     const { name, email, rating, comment } = req.body;
 
-    console.log("Received data:", { name, email, rating, comment });
+    console.log("📨 Review form received:", { name, email, rating, comment });
 
-    // Save review to the database
+    // Validate inputs
+    if (!name || !email || !rating || !comment) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5." });
+    }
+
+    // Save review to MongoDB
     const newReview = new ReviewForm({ name, email, rating, comment });
     const savedReview = await newReview.save();
-    console.log("Saved review:", savedReview);
+    console.log("✅ Review saved:", savedReview);
 
-    // Create Nodemailer transporter with Gmail
+    // Configure transporter
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true, // Use SSL
+      host: process.env.EMAIL_HOST || "smtp.gmail.com",
+      port: parseInt(process.env.EMAIL_PORT, 10) || 465,
+      secure: process.env.EMAIL_SECURE === "true", // true for 465, false for 587
       auth: {
-        user: process.env.EMAIL_USER, // Your Gmail address
-        pass: process.env.EMAIL_PASS, // Gmail App Password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
       logger: true,
-      debug: true,
+      debug: process.env.DEBUG === "true",
     });
 
-    // Verify transporter connection
     await transporter.verify();
-    console.log("SMTP connection verified successfully");
+    console.log("📡 SMTP transporter verified");
 
-    // Compose email content
+    // Email content
     const mailOptions = {
-      from: `"Review Notification" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_SEND, // Can send to another email
-      subject: "📢 New Customer Review Submitted",
+      from: `"AGX Review Bot" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_SEND, // Destination email
+      subject: "🌟 New Customer Review Submitted",
       html: `
-        <h2>You've received a new customer review!</h2>
+        <h3>New Review Received</h3>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Rating:</strong> ${rating} ⭐</p>
         <p><strong>Comment:</strong><br>${comment}</p>
-        <hr>
-        <small>This message was sent automatically by your website review system.</small>
+        <hr />
+        <small>Sent automatically from your website review system.</small>
       `,
     };
 
-    // Send email
     const info = await transporter.sendMail(mailOptions);
-    console.log("Review email sent:", info.messageId);
+    console.log("📧 Email sent:", info.messageId);
 
-    // Success response
-    res.status(201).json({ message: "Review submitted and email sent successfully." });
+    // Respond to client
+    res.status(201).json({
+      message: "Review submitted and email sent successfully.",
+    });
 
   } catch (error) {
-    console.error("Error submitting review:", error);
+    console.error("❌ Error submitting review:", error.stack || error);
     res.status(500).json({
       message: "Failed to submit review or send email.",
       error: error.message || error,

@@ -1,3 +1,4 @@
+// routes/reviews.js
 import express from 'express';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
@@ -10,17 +11,17 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const reviews = await Review.find().sort({ date: -1 });
-    res.json(reviews);
-  } catch (error) {
-    console.error('Error fetching reviews:', error.message);
+    res.status(200).json(reviews);
+  } catch (err) {
+    console.error('❌ Error fetching reviews:', err.message);
     res.status(500).json({ message: 'Failed to load reviews.' });
   }
 });
 
-// POST new review: save to DB + send email
+// POST a new review (save + send email)
 router.post('/', async (req, res) => {
   const { name, rating, comment } = req.body;
-  console.log('Received data:', req.body);
+  console.log('📥 New review data received:', req.body);
 
   if (!name || !rating || !comment) {
     return res.status(400).json({ message: 'Name, rating, and comment are required.' });
@@ -31,14 +32,16 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Save to DB
-    const newReview = new Review({ name, rating, comment });
-    const savedReview = await newReview.save();
-    console.log('Saved review:', savedReview);
+    // Save review to MongoDB
+    const review = new Review({ name, rating, comment });
+    const savedReview = await review.save();
+    console.log('✅ Review saved to DB:', savedReview);
 
-    // Send email
+    // Set up mail transporter
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtpout.secureserver.net', // for GoDaddy
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -46,30 +49,37 @@ router.post('/', async (req, res) => {
     });
 
     await transporter.verify();
-    console.log("✅ Gmail SMTP verified");
+    console.log('📡 Mail transporter verified');
 
+    // Mail content
     const mailOptions = {
-      from: `"Review Notification" <${process.env.EMAIL_USER}>`,
+      from: `"Website Review Bot" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_SEND,
-      subject: "📩 New Review Received",
+      subject: '📬 New Website Review Received',
       html: `
-        <h2>New Review Submitted</h2>
+        <h3>New Review</h3>
         <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Rating:</strong> ${rating} ⭐</p>
+        <p><strong>Rating:</strong> ${rating}/5</p>
         <p><strong>Comment:</strong><br>${comment}</p>
         <hr>
-        <small>This was sent automatically by your website's review system.</small>
+        <small>This is an automated message from the AGX website.</small>
       `,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("📧 Email sent:", info.messageId);
+    console.log('📧 Email sent:', info.messageId);
 
-    res.status(201).json({ message: "Review submitted and emailed successfully." });
+    res.status(201).json({
+      message: 'Review saved and email sent successfully!',
+      review: savedReview,
+    });
 
-  } catch (error) {
-    console.error("❌ Error submitting review:", error.message);
-    res.status(500).json({ message: 'Failed to submit review.', error: error.message });
+  } catch (err) {
+    console.error('💥 Error:', err.message);
+    res.status(500).json({
+      message: 'An error occurred while processing the review.',
+      error: err.message,
+    });
   }
 });
 
