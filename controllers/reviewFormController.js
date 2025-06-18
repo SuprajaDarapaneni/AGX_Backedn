@@ -28,7 +28,7 @@ export const submitReview = async (req, res) => {
 
     // Configure transporter
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || "smtp.gmail.com",
+      host: process.env.EMAIL_HOST || "smtpout.secureserver.net",
       port: parseInt(process.env.EMAIL_PORT, 10) || 465,
       secure: process.env.EMAIL_SECURE === "true", // true for 465, false for 587
       auth: {
