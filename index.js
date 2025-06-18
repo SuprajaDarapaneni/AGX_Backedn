@@ -14,7 +14,7 @@ import contactRoutes from "./routes/contact.js";
 import authRoutes from "./routes/authRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
-import reviewFormRoutes from "./routes/reviewFormRoutes.js";
+// import reviewFormRoutes from "./routes/reviewFormRoutes.js";
 
 // Data Models
 import User from "./models/User.js";
@@ -80,7 +80,7 @@ app.use("/auth", authRoutes);
 app.use("/", contactRoutes);
 app.use("/blogs", blogRoutes);
 app.use("/reviews", reviewRoutes);
-app.use("/reviewform", reviewFormRoutes);
+// app.use("/reviewform", reviewFormRoutes);
 
 /* MongoDB Connection & Server Start */
 const PORT = process.env.PORT || 9000;

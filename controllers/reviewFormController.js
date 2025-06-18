@@ -8,48 +8,58 @@ export const submitReview = async (req, res) => {
   try {
     const { name, email, rating, comment } = req.body;
 
-    // Save review to DB (private)
-    const newReview = new ReviewForm({ name, email, rating, comment });
-    await newReview.save();
+    console.log("Received data:", { name, email, rating, comment });
 
-    // Nodemailer transporter using GoDaddy Webmail
+    // Save review to the database
+    const newReview = new ReviewForm({ name, email, rating, comment });
+    const savedReview = await newReview.save();
+    console.log("Saved review:", savedReview);
+
+    // Create Nodemailer transporter with Gmail
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,                 // smtpout.secureserver.net
-      port: parseInt(process.env.EMAIL_PORT),       // 465
-      secure: true,
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true, // Use SSL
       auth: {
-        user: process.env.EMAIL_USER,               // info@agx-international.com
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER, // Your Gmail address
+        pass: process.env.EMAIL_PASS, // Gmail App Password
       },
       logger: true,
       debug: true,
     });
 
-    await transporter.verify(); // optional: verify SMTP settings before sending
+    // Verify transporter connection
+    await transporter.verify();
+    console.log("SMTP connection verified successfully");
 
-    // Email message config
+    // Compose email content
     const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_SEND, // Send to your inbox
-      subject: "New Customer Review Received",
+      from: `"Review Notification" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_RECEIVER || process.env.EMAIL_USER, // Can send to another email
+      subject: "📢 New Customer Review Submitted",
       html: `
-        <h3>Customer Review Details</h3>
+        <h2>You've received a new customer review!</h2>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Rating:</strong> ${rating} Stars</p>
+        <p><strong>Rating:</strong> ${rating} ⭐</p>
         <p><strong>Comment:</strong><br>${comment}</p>
+        <hr>
+        <small>This message was sent automatically by your website review system.</small>
       `,
     };
 
-    // Send the email
+    // Send email
     const info = await transporter.sendMail(mailOptions);
     console.log("Review email sent:", info.messageId);
 
-    // Respond with confirmation (but don't send back review data)
-    res.status(201).json({ message: "Review submitted successfully." });
+    // Success response
+    res.status(201).json({ message: "Review submitted and email sent successfully." });
+
   } catch (error) {
     console.error("Error submitting review:", error);
-    res.status(500).json({ message: "Failed to submit review", error: error.message || error });
+    res.status(500).json({
+      message: "Failed to submit review or send email.",
+      error: error.message || error,
+    });
   }
 };
-
